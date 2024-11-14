@@ -1,4 +1,5 @@
 from fastapi import FastAPI, HTTPException, Query
+from typing import Optional
 from pydantic import BaseModel
 import hmac
 import hashlib
@@ -10,8 +11,6 @@ import requests
 import json
 from datetime import datetime, timedelta
 from typing import Union
-from fastapi.middleware.cors import CORSMiddleware
-from typing import List, Union, Dict, Any,Optional
 
 load_dotenv()
 
@@ -26,14 +25,6 @@ redirect_url = os.getenv("REDIRECT_URL")
 host = "https://partner.test-stable.shopeemobile.com"
 
 app = FastAPI()
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],  # Allows all origins (change to a list of specific origins for security)
-    allow_credentials=True,
-    allow_methods=["*"],  # Allows all HTTP methods (adjust if necessary)
-    allow_headers=["*"],  # Allows all headers (adjust if necessary)
-)
 
 class TokenResponse(BaseModel):
     access_token: str
@@ -149,12 +140,19 @@ def get_order_list(order_status: str, time_from: int, time_to: int, access_token
         raise HTTPException(status_code=400, detail="Failed to retrieve order list")
 
 @app.post("/get_order_list", response_model=OrderListResponse)
-def get_order_list_endpoint(order_status: str, days_ago: int = 10, access_token: str = "YOUR_ACCESS_TOKEN"):
-    # Calculate start and end times
-    end_time = int(datetime.timestamp(datetime.now()))
-    start_time = int(datetime.timestamp(datetime.now() - timedelta(days=days_ago)))
+def get_order_list_endpoint(order_status: str, date: str = None, access_token: str = "YOUR_ACCESS_TOKEN"):
+    # กำหนดวันที่ปัจจุบันถ้าไม่ได้ระบุ
+    if date is None:
+        date = datetime.now().strftime("%Y-%m-%d")
 
-    # Call the get_order_list function
+    # แปลงวันที่จาก string ไปเป็น datetime
+    selected_date = datetime.strptime(date, "%Y-%m-%d")
+    
+    # กำหนด start_time และ end_time เป็นช่วงเวลาในวันที่ระบุ
+    start_time = int(datetime.timestamp(selected_date))
+    end_time = int(datetime.timestamp(selected_date + timedelta(days=1)) - 1)  # สิ้นสุดในเวลา 23:59:59
+
+    # เรียกฟังก์ชัน get_order_list
     order_list = get_order_list(order_status, start_time, end_time, access_token)
     return OrderListResponse(order_list=order_list)
 
@@ -268,6 +266,12 @@ def order_endpoint(
     return combined_result
 
 
+from datetime import datetime
+from typing import Dict, Any
+from fastapi import HTTPException
+
+
+
 @app.post("/get_all_orders", response_model=CombinedResponse)
 def get_all_orders(
     access_token: str,
@@ -279,12 +283,14 @@ def get_all_orders(
 ):
     combined_result: Dict[str, Any] = {}
 
+    # แปลงวันที่เริ่มต้นและสิ้นสุดจาก string เป็น timestamp
     try:
         start_time = int(datetime.strptime(start_date, "%Y-%m-%d").timestamp())
         end_time = int(datetime.strptime(end_date, "%Y-%m-%d").timestamp())
     except ValueError:
         raise HTTPException(status_code=400, detail="Invalid date format. Use YYYY-MM-DD.")
 
+    # ดึงรายการออเดอร์ (order_list)
     try:
         order_list = get_order_list(
             order_status=order_status,
@@ -293,11 +299,18 @@ def get_all_orders(
             access_token=access_token
         )
         combined_result["order_list"] = order_list
-        order_sn_list = ",".join([order["order_sn"] for order in order_list]) if order_list else None
+
+        # ตั้งค่า order_sn_list จาก order_list ที่ดึงมา
+        if order_list:
+            order_sn_list = ",".join([order["order_sn"] for order in order_list])
+        else:
+            order_sn_list = None
+
     except HTTPException as e:
         combined_result["order_list_error"] = e.detail
         order_sn_list = None
 
+    # ดึงรายละเอียดของออเดอร์ (order_detail) ถ้ามี order_sn_list
     if order_sn_list:
         try:
             order_detail = get_order_detail(
@@ -311,5 +324,8 @@ def get_all_orders(
             combined_result["order_detail_error"] = e.detail
     else:
         combined_result["order_detail_error"] = "No orders found for the specified date range."
+
+    if not combined_result:
+        raise HTTPException(status_code=400, detail="No valid request parameters provided.")
 
     return combined_result
