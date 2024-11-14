@@ -11,6 +11,7 @@ import requests
 import json
 from datetime import datetime, timedelta
 from typing import Union
+from fastapi.middleware.cors import CORSMiddleware
 
 load_dotenv()
 
@@ -25,6 +26,14 @@ redirect_url = os.getenv("REDIRECT_URL")
 host = "https://partner.test-stable.shopeemobile.com"
 
 app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Allows all origins. Change this for security in production
+    allow_credentials=True,
+    allow_methods=["*"],  # Allows all HTTP methods
+    allow_headers=["*"],  # Allows all headers
+)
 
 class TokenResponse(BaseModel):
     access_token: str
