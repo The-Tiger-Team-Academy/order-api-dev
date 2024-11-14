@@ -40,7 +40,7 @@ jobs:
       with:
         context: .
         push: true
-        tags: latest
+        tags: bestbest/be-orders:latest
 
     - name: Set up SSH
       uses: webfactory/ssh-agent@v0.5.3
