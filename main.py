@@ -1,5 +1,4 @@
 from fastapi import FastAPI, HTTPException, Query
-from typing import Optional
 from pydantic import BaseModel
 import hmac
 import hashlib
@@ -12,6 +11,7 @@ import json
 from datetime import datetime, timedelta
 from typing import Union
 from fastapi.middleware.cors import CORSMiddleware
+from typing import List, Union, Dict, Any,Optional
 
 load_dotenv()
 
@@ -77,7 +77,7 @@ def auth():
         "auth_url": url,
     }
 
-@app.post("/get_token", response_model=TokenResponse)
+@app.get("/get_token", response_model=TokenResponse)
 def get_token():
     ts = int(time.time())
     body = {"code": code, "shop_id": shop_id, "partner_id": partner_id}
@@ -279,14 +279,12 @@ def get_all_orders(
 ):
     combined_result: Dict[str, Any] = {}
 
-    # แปลงวันที่เริ่มต้นและสิ้นสุดจาก string เป็น timestamp
     try:
         start_time = int(datetime.strptime(start_date, "%Y-%m-%d").timestamp())
         end_time = int(datetime.strptime(end_date, "%Y-%m-%d").timestamp())
     except ValueError:
         raise HTTPException(status_code=400, detail="Invalid date format. Use YYYY-MM-DD.")
 
-    # ดึงรายการออเดอร์ (order_list)
     try:
         order_list = get_order_list(
             order_status=order_status,
@@ -295,18 +293,11 @@ def get_all_orders(
             access_token=access_token
         )
         combined_result["order_list"] = order_list
-
-        # ตั้งค่า order_sn_list จาก order_list ที่ดึงมา
-        if order_list:
-            order_sn_list = ",".join([order["order_sn"] for order in order_list])
-        else:
-            order_sn_list = None
-
+        order_sn_list = ",".join([order["order_sn"] for order in order_list]) if order_list else None
     except HTTPException as e:
         combined_result["order_list_error"] = e.detail
         order_sn_list = None
 
-    # ดึงรายละเอียดของออเดอร์ (order_detail) ถ้ามี order_sn_list
     if order_sn_list:
         try:
             order_detail = get_order_detail(
@@ -320,8 +311,5 @@ def get_all_orders(
             combined_result["order_detail_error"] = e.detail
     else:
         combined_result["order_detail_error"] = "No orders found for the specified date range."
-
-    if not combined_result:
-        raise HTTPException(status_code=400, detail="No valid request parameters provided.")
 
     return combined_result
