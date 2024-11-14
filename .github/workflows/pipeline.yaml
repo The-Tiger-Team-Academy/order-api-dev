@@ -49,7 +49,7 @@ jobs:
       with:
         context: .
         push: true
-        tags: bestbest/batttrack-api:latest
+        tags: order-api-dev:latest
 
     - name: Set up SSH
       uses: webfactory/ssh-agent@v0.5.3
@@ -59,10 +59,10 @@ jobs:
     - name: Deploy to host
       run: |
         ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no -p $SERVER_PORT $SERVER_USERNAME@$SERVER_IP << EOF
-          docker stop batttrackapi || true
-          docker rm batttrackapi || true
-          docker-compose -f docker-compose.yml pull
-          docker-compose -f docker-compose.yml up -d
+          docker stop order-api-dev || true
+          docker rm order-api-dev || true
+          docker-compose -f docker-compose.yaml pull
+          docker-compose -f docker-compose.yaml up -d
         EOF
       env:
         SERVER_IP: ${{ secrets.SERVER_IP }}
