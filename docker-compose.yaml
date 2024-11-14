@@ -2,6 +2,7 @@ version: '3.8'
 
 services:
   app:
+    image: bright270445/order-api-dev:latest
     build:
       context: .
       dockerfile: Dockerfile
