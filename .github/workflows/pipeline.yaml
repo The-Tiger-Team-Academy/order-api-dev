@@ -42,24 +42,20 @@ jobs:
         push: true
         tags: bestbest/be-orders:latest
 
-    - name: Set up SSH
-      uses: webfactory/ssh-agent@v0.5.3
-      with:
-        ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+    - name: Install sshpass
+      run: sudo apt-get install -y sshpass
 
     - name: Deploy to host
       run: |
-        ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no -p $SERVER_PORT $SERVER_USERNAME@$SERVER_IP << EOF
+        sshpass -p "${{ secrets.SERVER_PASSWORD }}" ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USERNAME }}@$SERVER_IP << EOF
           docker stop be-orders || true
           docker rm be-orders || true
           docker pull bestbest/be-orders:latest
-          cd /home/be-orders 
+          cd /home/be-orders
           docker compose up -d
         EOF
       env:
         SERVER_IP: ${{ secrets.SERVER_IP }}
-        SERVER_PORT: ${{ secrets.SERVER_PORT }}
-        SERVER_USERNAME: ${{ secrets.SERVER_USERNAME }}
         PARTNER_ID: ${{ secrets.PARTNER_ID }}
         PARTNER_KEY: ${{ secrets.PARTNER_KEY }}
         REDIRECT_URL: ${{ secrets.REDIRECT_URL }}
