@@ -32,7 +32,7 @@ partner_id = int(os.getenv("PARTNER_ID"))
 partner_key = os.getenv("PARTNER_KEY")
 redirect_url = os.getenv("REDIRECT_URL")
 host = "https://partner.test-stable.shopeemobile.com"
-initial_refresh_token = "464977474a496c4f4f50595071465370"  # Provided refresh token
+initial_refresh_token = "6c4b7674767172766b6e745476776f4b"  # Provided refresh token
 
 # Global storage for tokens
 tokens = {
@@ -247,3 +247,17 @@ def get_all_orders(
         raise HTTPException(status_code=400, detail="No valid request parameters provided.")
 
     return combined_result
+
+@app.get("/tokens")
+def get_current_tokens():
+    """
+    Endpoint to display the current access_token and refresh_token.
+    """
+    if tokens["access_token"] is None or tokens["refresh_token"] is None:
+        raise HTTPException(status_code=404, detail="Tokens not available")
+
+    return {
+        "access_token": tokens["access_token"],
+        "refresh_token": tokens["refresh_token"],
+        "expiry_time": tokens["expiry_time"]
+    }
