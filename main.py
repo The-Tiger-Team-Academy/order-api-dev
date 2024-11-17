@@ -28,11 +28,12 @@ app.add_middleware(
 # Environment Variables
 code = os.getenv("CODE")
 shop_id = int(os.getenv("SHOP_ID"))
-partner_id = int(os.getenv("PARTNER_ID"))
+# partner_id = int(os.getenv("PARTNER_ID"))
+partner_id = 2009916
 partner_key = os.getenv("PARTNER_KEY")
 redirect_url = os.getenv("REDIRECT_URL")
 host = "https://partner.shopeemobile.com"
-initial_refresh_token = "6a79756476557a7044725053776c636d"
+initial_refresh_token = "6d76444b574d7477564e707946784d6e"
 
 tokens = {
     "access_token": None,
