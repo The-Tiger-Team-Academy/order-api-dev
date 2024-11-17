@@ -32,7 +32,7 @@ partner_id = int(os.getenv("PARTNER_ID"))
 partner_key = os.getenv("PARTNER_KEY")
 redirect_url = os.getenv("REDIRECT_URL")
 host = "https://partner.shopeemobile.com"
-initial_refresh_token = "7774644e4c45487348484b6b64577078"
+initial_refresh_token = "4b7569756871756e4154516653494378"
 
 # Global storage for tokens
 tokens = {
