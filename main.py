@@ -34,7 +34,6 @@ redirect_url = os.getenv("REDIRECT_URL")
 host = "https://partner.shopeemobile.com"
 initial_refresh_token = "6a79756476557a7044725053776c636d"
 
-# Global storage for tokens
 tokens = {
     "access_token": None,
     "refresh_token": initial_refresh_token,
