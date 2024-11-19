@@ -18,9 +18,6 @@ class OrderListResponse(BaseModel):
 
 
 def getOrderList(order_status: str, time_from: int, time_to: int, access_token: str):
-    """
-    Fetch the order list from Shopee API for the given time range and order status.
-    """
     ts = int(datetime.timestamp(datetime.now()))
     path = "/api/v2/order/get_order_list"
     base_str = str(partner_id) + path + str(ts) + access_token + str(shop_id)
@@ -47,9 +44,6 @@ def getOrderList(order_status: str, time_from: int, time_to: int, access_token: 
 
 
 def getOrderListEndpoint(access_token: str, order_status: str, date: str = None):
-    """
-    Endpoint function to get the order list for a specific date and order status.
-    """
     if date is None:
         date = datetime.now().strftime("%Y-%m-%d")
 
