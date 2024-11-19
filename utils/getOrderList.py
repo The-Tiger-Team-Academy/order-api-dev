@@ -1,15 +1,18 @@
-from fastapi import HTTPException  # type: ignore
+from fastapi import FastAPI, HTTPException, Query
+from typing import Optional
+from datetime import datetime, timedelta
 import hmac
 import hashlib
-import requests  # type: ignore
-import json
-from datetime import datetime, timedelta
+import requests
 import os
-from pydantic import BaseModel  # type: ignore
+from pydantic import BaseModel
 
-shop_id = int(os.getenv("SHOP_ID"))
-partner_id = int(os.getenv("PARTNER_ID"))
-partner_key = os.getenv("PARTNER_KEY")
+app = FastAPI()
+
+# Load environment variables
+shop_id = int(os.getenv("SHOP_ID", "0"))
+partner_id = int(os.getenv("PARTNER_ID", "0"))
+partner_key = os.getenv("PARTNER_KEY", "")
 host = "https://partner.shopeemobile.com"
 
 
@@ -20,7 +23,7 @@ class OrderListResponse(BaseModel):
 def getOrderList(order_status: str, time_from: int, time_to: int, access_token: str):
     ts = int(datetime.timestamp(datetime.now()))
     path = "/api/v2/order/get_order_list"
-    base_str = str(partner_id) + path + str(ts) + access_token + str(shop_id)
+    base_str = f"{partner_id}{path}{ts}{access_token}{shop_id}"
     sign = hmac.new(partner_key.encode("utf-8"), base_str.encode("utf-8"), hashlib.sha256).hexdigest()
 
     url = (
@@ -35,12 +38,12 @@ def getOrderList(order_status: str, time_from: int, time_to: int, access_token: 
 
     headers = {"Content-Type": "application/json"}
     response = requests.get(url, headers=headers, allow_redirects=False)
-    content = json.loads(response.content)
+    content = response.json()
 
     if "response" in content and "order_list" in content["response"]:
         return content["response"]["order_list"]
     else:
-        raise HTTPException(status_code=400, detail="Failed to retrieve order list")
+        raise HTTPException(status_code=400, detail=content.get("error_message", "Failed to retrieve order list"))
 
 
 def getOrderListEndpoint(access_token: str, order_status: str, date: str = None):

@@ -9,6 +9,8 @@ from utils.getCurrentToken import getCurrentToken
 from utils.refreshToken import refreshToken
 from utils.getAllOrder import getAllOrder
 from utils.checkOrder import checkOrders
+from utils.getOrderList import getOrderList
+from utils.getOrderDetail import getOrderDetail
 from datetime import datetime, timedelta
 
 load_dotenv()
@@ -35,6 +37,9 @@ class CombinedResponse(BaseModel):
 class OrderListResponse(BaseModel):
     order_list: list
 
+class OrderListResponse(BaseModel):
+    order_list: list
+
 
 @app.get("/auth")
 def generate_auth_url():
@@ -52,26 +57,34 @@ def get_current_tokens():
 def refresh_token():
     return refreshToken()
 
-@app.post("/get_all_orders", response_model=CombinedResponse)
-def get_all_order(
-    access_token: str,
-    start_date: str = datetime.now().strftime("%Y-%m-%d"),
-    end_date: str = (datetime.now() + timedelta(days=1)).strftime("%Y-%m-%d"),
-    order_status: str = "READY_TO_SHIP",
-    request_order_status_pending: bool = False,
-    response_optional_fields: str = "buyer_username,pay_time,item_list",
+@app.get("/get_all_orders", response_model=Dict[str, Any])
+def get_all_orders(
+    access_token: str = Query(..., description="Access token for Shopee API"),
+    start_date: str = Query(..., description="Start date in YYYY-MM-DD"),
+    end_date: str = Query(..., description="End date in YYYY-MM-DD"),
+    order_status: str = Query("READY_TO_SHIP", description="Status of the orders to filter"),
+    request_order_status_pending: Optional[bool] = Query(False, description="Include pending order status in details"),
+    response_optional_fields: Optional[str] = Query("buyer_username,pay_time,item_list", description="Optional fields to include in the response"),
 ):
+    """
+    API endpoint to fetch all orders and their details for a specific date range and status.
+    """
     try:
+        from utils.getAllOrder import getAllOrder
         return getAllOrder(
-            start_date=start_date,
-            end_date=end_date,
             access_token=access_token,
             order_status=order_status,
+            start_date=start_date,
+            end_date=end_date,
             request_order_status_pending=request_order_status_pending,
             response_optional_fields=response_optional_fields,
         )
+    except HTTPException as e:
+        raise e
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to fetch all orders: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to fetch all orders and details: {str(e)}")
+
+
 
 @app.get("/check_inventory")
 def check_order(access_token: str = Query(..., description="Access token for Shopee API")):
@@ -82,3 +95,52 @@ def check_order(access_token: str = Query(..., description="Access token for Sho
         raise http_exc
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(exc)}")
+
+@app.get("/orders", response_model=OrderListResponse)
+def getOrderListEndpoint(
+    access_token: str = Query(..., description="Access token for Shopee API"),
+    order_status: str = Query("READY_TO_SHIP", description="Status of the orders to filter"),
+    date: Optional[str] = Query(None, description="Date in YYYY-MM-DD format")
+):
+    """
+    API endpoint to get the order list for a specific date and order status.
+    """
+    try:
+        if date is None:
+            date = datetime.now().strftime("%Y-%m-%d")
+
+        selected_date = datetime.strptime(date, "%Y-%m-%d")
+        start_time = int(datetime.timestamp(selected_date))
+        end_time = int(datetime.timestamp(selected_date + timedelta(days=1)) - 1)
+
+        # ใช้ฟังก์ชัน getOrderList จาก utils/OrderList.py
+        order_list = getOrderList(order_status, start_time, end_time, access_token)
+        return OrderListResponse(order_list=order_list)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/get_order_detail")
+def get_order_detail_endpoint(
+    order_sn_list: str = Query(..., description="Comma-separated list of order_sn"),
+    access_token: str = Query(..., description="Access token for Shopee API"),
+    request_order_status_pending: Optional[bool] = Query(False, description="Include pending order status"),
+    response_optional_fields: Optional[str] = Query("buyer_username,pay_time,item_list", description="Optional fields to include in the response")
+):
+    """
+    API endpoint to get detailed information about specific orders.
+    """
+    try:
+        # เรียกใช้งานฟังก์ชัน getOrderDetail
+        order_details = getOrderDetail(
+            order_sn_list=order_sn_list,
+            access_token=access_token,
+            request_order_status_pending=request_order_status_pending,
+            response_optional_fields=response_optional_fields
+        )
+        return order_details
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to retrieve order details: {str(e)}")
+
+
