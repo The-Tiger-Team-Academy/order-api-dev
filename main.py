@@ -75,9 +75,6 @@ def get_all_order(
 
 @app.get("/check_inventory")
 def check_order(access_token: str = Query(..., description="Access token for Shopee API")):
-    """
-    Endpoint to check the inventory status of orders.
-    """
     try:
         inventory_status = checkOrders(access_token)
         return inventory_status
