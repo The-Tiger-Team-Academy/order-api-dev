@@ -1,26 +1,27 @@
-from fastapi import HTTPException  # type: ignore
+from fastapi import HTTPException
 from sqlalchemy.orm import Session
-from db.db import SessionLocal, Token  # Import your database session and Token model
-
+from db.db import SessionLocal, Token
 
 def getCurrentToken():
-    """
-    Fetch the current access_token and refresh_token from the database.
-    """
-    db: Session = SessionLocal()
     try:
-        # Query the Token table for the latest token
-        current_token = db.query(Token).order_by(Token.expiry_time.desc()).first()
+        last_record = get_last_record()
 
-        if not current_token:
-            raise HTTPException(status_code=404, detail="Tokens not available")
+        if not last_record:
+            raise HTTPException(status_code=404, detail="ไม่มีข้อมูล Token ล่าสุดในฐานข้อมูล")
 
         return {
-            "access_token": current_token.access_token,
-            "refresh_token": current_token.refresh_token,
-            "expiry_time": current_token.expiry_time,
+            "access_token": last_record.access_token,
+            "refresh_token": last_record.refresh_token,
+            "expiry_time": last_record.expiry_time,
         }
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error retrieving token from database: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"เกิดข้อผิดพลาดในการดึงข้อมูล Token: {str(e)}")
+
+def get_last_record():
+    db: Session = SessionLocal()
+    try:
+        # Query token ล่าสุดตามลำดับการเพิ่มในตาราง
+        last_record = db.query(Token).limit(1).offset(db.query(Token).count() - 1).first()
+        return last_record
     finally:
         db.close()
