@@ -61,3 +61,10 @@ jobs:
         REDIRECT_URL: ${{ secrets.REDIRECT_URL }}
         CODE: ${{ secrets.CODE }}
         SHOP_ID: ${{ secrets.SHOP_ID }}
+        STOREHUB_API_USERNAME: ${{ secrets.STOREHUB_API_USERNAME }}
+        STOREHUB_API_PASSWORD: ${{ secrets.STOREHUB_API_PASSWORD }}
+        DB_USERNAME: ${{ secrets.DB_USERNAME }}
+        DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+        DB_HOST: ${{ secrets.DB_HOST }}
+        DB_PORT: ${{ secrets.DB_PORT }}
+        DB_NAME: ${{ secrets.DB_NAME }}
