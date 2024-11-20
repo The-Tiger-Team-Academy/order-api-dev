@@ -8,7 +8,7 @@ from utils.getToken import getToken
 from utils.getCurrentToken import getCurrentToken
 from utils.refreshToken import refreshToken
 from utils.getAllOrder import getAllOrder
-from utils.checkOrder import checkOrders
+# from utils.checkOrder import checkOrders
 from utils.getOrderList import getOrderList
 from utils.getOrderDetail import getOrderDetail
 from datetime import datetime, timedelta
@@ -66,11 +66,7 @@ def get_all_orders(
     request_order_status_pending: Optional[bool] = Query(False, description="Include pending order status in details"),
     response_optional_fields: Optional[str] = Query("buyer_username,pay_time,item_list", description="Optional fields to include in the response"),
 ):
-    """
-    API endpoint to fetch all orders and their details for a specific date range and status.
-    """
     try:
-        from utils.getAllOrder import getAllOrder
         return getAllOrder(
             access_token=access_token,
             order_status=order_status,
@@ -85,16 +81,15 @@ def get_all_orders(
         raise HTTPException(status_code=500, detail=f"Failed to fetch all orders and details: {str(e)}")
 
 
+# @app.get("/check_inventory", summary="Check Inventory", tags=["Inventory"])
+# def check_order(
+#     access_token: str = Query(..., description="Access token for Shopee API"),
+#     start_date: str = Query(..., description="Start date in YYYY-MM-DD format"),
+#     end_date: str = Query(..., description="End date in YYYY-MM-DD format"),
+# ) -> Any:
+#         inventory_status = checkOrders(access_token, start_date, end_date)
+#         return {"data": inventory_status}
 
-@app.get("/check_inventory")
-def check_order(access_token: str = Query(..., description="Access token for Shopee API")):
-    try:
-        inventory_status = checkOrders(access_token)
-        return inventory_status
-    except HTTPException as http_exc:
-        raise http_exc
-    except Exception as exc:
-        raise HTTPException(status_code=500, detail=f"Internal server error: {str(exc)}")
 
 @app.get("/orders", response_model=OrderListResponse)
 def getOrderListEndpoint(
@@ -113,7 +108,6 @@ def getOrderListEndpoint(
         start_time = int(datetime.timestamp(selected_date))
         end_time = int(datetime.timestamp(selected_date + timedelta(days=1)) - 1)
 
-        # ใช้ฟังก์ชัน getOrderList จาก utils/OrderList.py
         order_list = getOrderList(order_status, start_time, end_time, access_token)
         return OrderListResponse(order_list=order_list)
     except Exception as e:
@@ -130,7 +124,6 @@ def get_order_detail_endpoint(
     API endpoint to get detailed information about specific orders.
     """
     try:
-        # เรียกใช้งานฟังก์ชัน getOrderDetail
         order_details = getOrderDetail(
             order_sn_list=order_sn_list,
             access_token=access_token,

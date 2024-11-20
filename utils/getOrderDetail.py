@@ -39,6 +39,6 @@ def getOrderDetail(order_sn_list: str, access_token: str, request_order_status_p
     content = json.loads(response.content)
 
     if content.get("error") == "" and "order_list" in content.get("response", {}):
-        return {"order_detail": content["response"]["order_list"]}
+        return {"order_details": content["response"]["order_list"]}
     else:
         raise HTTPException(status_code=400, detail=content.get("message", "Failed to retrieve order details"))
