@@ -12,6 +12,7 @@ from utils.getAllOrder import getAllOrder
 from utils.getOrderList import getOrderList
 from utils.getOrderDetail import getOrderDetail
 from datetime import datetime, timedelta
+from utils.fetchWithAuth import fetchAuth
 
 load_dotenv()
 
@@ -79,6 +80,20 @@ def get_all_orders(
         raise e
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to fetch all orders and details: {str(e)}")
+
+@app.get("/api/stores")
+def get_stores():
+    return fetchAuth("/stores")
+
+
+@app.get("/api/inventory/{store_id}")
+def get_inventory(store_id: str):
+    return fetchAuth(f"/inventory/{store_id}")
+
+
+@app.get("/api/products/{product_id}")
+def get_product_details(product_id: str):
+    return fetchAuth(f"/products/{product_id}")
 
 
 # @app.get("/check_inventory", summary="Check Inventory", tags=["Inventory"])

@@ -7,7 +7,7 @@ import requests  # type: ignore
 import json
 from datetime import datetime, timedelta
 from sqlalchemy.orm import Session
-from db.db import SessionLocal, Token  # Import database session and model
+from db.db import SessionLocal, Token 
 
 load_dotenv()
 
@@ -16,21 +16,34 @@ partner_id = int(os.getenv("PARTNER_ID"))
 partner_key = os.getenv("PARTNER_KEY")
 host = "https://partner.shopeemobile.com"
 
+
 def get_latest_refresh_token_from_db():
-    """
-    Retrieve the most recent refresh token from the database.
-    """
     db: Session = SessionLocal()
     try:
-        latest_token = db.query(Token).order_by(Token.expiry_time.desc()).first()
-        if not latest_token:
-            raise HTTPException(status_code=404, detail="No refresh token found in the database.")
-        return latest_token.refresh_token
+        # Get the total number of tokens in the database
+        total_tokens = db.query(Token).count()
+        
+        if total_tokens == 0:
+            raise HTTPException(status_code=404, detail="No refresh tokens found in the database.")
+        
+        # Retrieve the last token using the total count as an index
+        last_token = db.query(Token)[total_tokens - 1]
+        
+        if not last_token or not last_token.refresh_token:
+            raise HTTPException(status_code=404, detail="No valid refresh token found.")
+        
+        # Log the retrieved refresh token details
+        print(f"Total tokens in database: {total_tokens}")
+        print(f"Retrieved last index refresh token: {last_token.refresh_token}")
+
+        return last_token.refresh_token
+    except IndexError:
+        raise HTTPException(status_code=404, detail="Unable to retrieve the last token.")
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error retrieving refresh token: {str(e)}")
+        print(f"Error during last index token retrieval: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error retrieving last index refresh token: {str(e)}")
     finally:
         db.close()
-
 
 def save_token_to_db(access_token: str, refresh_token: str, expiry_time: datetime):
     """
@@ -63,11 +76,7 @@ def save_token_to_db(access_token: str, refresh_token: str, expiry_time: datetim
 
 
 def refreshToken():
-    """
-    Refresh the access token using the latest refresh token and save the new tokens to the database.
-    """
     try:
-        # Get the latest refresh token from the database
         refresh_token = get_latest_refresh_token_from_db()
 
         ts = int(datetime.timestamp(datetime.now()))
@@ -87,7 +96,6 @@ def refreshToken():
             refresh_token = content["refresh_token"]
             expiry_time = datetime.now() + timedelta(hours=4)
 
-            # Save the new tokens to the database
             save_token_to_db(access_token, refresh_token, expiry_time)
 
             return {
