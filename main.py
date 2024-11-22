@@ -1,4 +1,6 @@
-from fastapi import FastAPI, HTTPException, Query # type: ignore
+from fastapi import FastAPI, HTTPException, Query, Depends # type: ignore
+from db.db import get_db, Product
+from sqlalchemy.orm import Session
 from typing import Optional, Dict, Any, Union, List
 from pydantic import BaseModel # type: ignore
 from dotenv import load_dotenv # type: ignore
@@ -8,11 +10,21 @@ from utils.getToken import getToken
 from utils.getCurrentToken import getCurrentToken
 from utils.refreshToken import refreshToken
 from utils.getAllOrder import getAllOrder
-# from utils.checkOrder import checkOrders
+from utils.checkOrder import compareStoreOrders
+from utils.getInventoryByStore import getSkuByStore
 from utils.getOrderList import getOrderList
 from utils.getOrderDetail import getOrderDetail
 from datetime import datetime, timedelta
 from utils.fetchWithAuth import fetchAuth
+
+
+from utils.storehub.getproduct import fetch_and_store_products
+from utils.storehub.getproduct import get_products_from_db
+from utils.storehub.compare_sku import fetch_and_compare_skus
+from utils.storehub.compare_inventory import check_sku_in_stores
+
+
+
 
 load_dotenv()
 
@@ -40,6 +52,11 @@ class OrderListResponse(BaseModel):
 
 class OrderListResponse(BaseModel):
     order_list: list
+
+class ProductResponse(BaseModel):
+    id: str
+    name: str
+    sku: str
 
 
 @app.get("/auth")
@@ -152,3 +169,64 @@ def get_order_detail_endpoint(
         raise HTTPException(status_code=500, detail=f"Failed to retrieve order details: {str(e)}")
 
 
+@app.get("/store_skus")
+def get_store_skus(
+    store_id: str = Query(..., description="ID of the store to fetch SKUs from.")
+):
+    """
+    API endpoint to fetch SKUs of products available in the specified store.
+    """
+    try:
+        return getSkuByStore(store_id=store_id)
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to fetch SKUs: {str(e)}")
+
+
+
+
+@app.get("/storehub/products")
+def get_and_store_products():
+    """
+    ดึงข้อมูลผลิตภัณฑ์จาก StoreHub และบันทึกลงฐานข้อมูล PostgreSQL
+    """
+    try:
+        return fetch_and_store_products()
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/products", response_model=List[ProductResponse])
+def fetch_and_compare_skus(db: Session = Depends(get_db)):
+    """
+    ดึงข้อมูลผลิตภัณฑ์ทั้งหมดจากฐานข้อมูล PostgreSQL
+    """
+    try:
+        products = db.query(Product).all()
+        # แปลง SQLAlchemy objects เป็น dict เพื่อส่งกลับ
+        return [ProductResponse(id=product.id, name=product.name, sku=product.sku) for product in products]
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/compare_skus_from_orders")
+def compare_skus_from_orders(
+    access_token: str = Query(..., description="Access token for Shopee API"),
+    start_date: str = Query(..., description="Start date in YYYY-MM-DD"),
+    end_date: str = Query(..., description="End date in YYYY-MM-DD")
+):
+    from utils.storehub.compare_sku import fetch_and_compare_skus  # Import ภายใน endpoint
+    return fetch_and_compare_skus(access_token, start_date, end_date)
+
+
+@app.get("/check_sku_in_stores")
+def check_sku_in_stores_endpoint(
+    sku: str = Query(..., description="SKU ของสินค้าที่ต้องการตรวจสอบ")
+):
+    """
+    API เพื่อตรวจสอบว่าสินค้าที่ระบุ SKU มีอยู่ใน store ไหนบ้าง
+    """
+    return check_sku_in_stores(sku)

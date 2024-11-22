@@ -27,5 +27,18 @@ class Token(Base):
     refresh_token = Column(String, nullable=False)
     expiry_time = Column(DateTime, nullable=False)
 
+class Product(Base):
+    __tablename__ = "products"
+    id = Column(String, primary_key=True)
+    name = Column(String, nullable=False)
+    sku = Column(String, nullable=False)
+
 # Ensure the table exists
 Base.metadata.create_all(bind=engine)
+
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
