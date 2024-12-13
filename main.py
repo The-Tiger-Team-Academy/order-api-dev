@@ -7,7 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware # type: ignore
 from app.routers.shopee import refresh_token, check_token, auth, new_token, get_all_order
 from app.routers.storehub import inventory_check
 from app.routers.orders import compare_orders
-from app.routers.lazada import new_token,auth,refresh_token
+from app.routers.lazada import new_token,auth,refresh_token, check_token
 
 load_dotenv()
 
@@ -49,16 +49,17 @@ app.include_router(new_token.router)
 app.include_router(get_all_order.router)
 #----------------------
 
+#---Lazada Routers-----
+app.include_router(new_token.router)
+app.include_router(auth.router)
+app.include_router(refresh_token.router)
+app.include_router(check_token.router)
+#----------------------
+
 #---StoreHub Routers---
 app.include_router(inventory_check.router)
 #----------------------
 
 #---Orders Routers-----
 app.include_router(compare_orders.router)
-#----------------------
-
-#---Lazada Routers-----
-app.include_router(new_token.router)
-app.include_router(auth.router)
-app.include_router(refresh_token.router)
 #----------------------

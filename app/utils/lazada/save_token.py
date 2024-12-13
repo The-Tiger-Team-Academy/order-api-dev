@@ -1,7 +1,7 @@
 from datetime import datetime
 from sqlalchemy.exc import SQLAlchemyError #type: ignore
 from ...db.db_token import SessionLocal
-from ...models.laz import TokenLaz
+from ...models.lazada import TokenLaz
 
 def save_token_to_db(access_token: str, refresh_token: str, expiry_time: datetime):
     db = SessionLocal()

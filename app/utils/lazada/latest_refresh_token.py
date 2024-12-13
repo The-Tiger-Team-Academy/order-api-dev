@@ -1,7 +1,7 @@
 from fastapi import HTTPException  # type: ignore
 from sqlalchemy.orm import Session  # type: ignore
 from ...db.db_token import SessionLocal
-from ...models.laz import TokenLaz 
+from ...models.lazada import TokenLaz 
 
 def get_latest_refresh_token_from_db():
     db: Session = SessionLocal()
