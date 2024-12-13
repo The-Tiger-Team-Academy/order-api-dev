@@ -1,4 +1,4 @@
-import lazop
+import lazop #type: ignore
 
 url = "https://api.lazada.co.th/rest"
 appkey = "131467"
