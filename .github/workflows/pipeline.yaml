@@ -51,7 +51,7 @@ jobs:
           docker stop be-orders || true
           docker rm be-orders || true
           docker pull bestbest/be-orders:latest
-          cd /home/be-orders
+          cd /home/be-orderhub
           docker compose up -d
         EOF
       env:
