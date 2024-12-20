@@ -13,18 +13,18 @@ router = APIRouter(
 )
 
 async def execute_query_with_timeout(db: Session, query: text, params: dict, timeout: int = 5):
-    # Convert synchronous database operation to run in a thread pool
     loop = asyncio.get_running_loop()
     try:
-        async with asyncio.timeout(timeout):
-            # Run database query in thread pool
-            result = await loop.run_in_executor(
+        # ใช้ wait_for แทน timeout
+        result = await asyncio.wait_for(
+            loop.run_in_executor(
                 None,
                 partial(db.execute, query, params)
-            )
-            return result.fetchall()
+            ),
+            timeout=timeout
+        )
+        return result.fetchall()
     except asyncio.TimeoutError:
-        # If timeout occurs, return None to trigger retry
         return None
 
 async def retry_query(db: Session, query: text, params: dict, max_retries: int = 3):
