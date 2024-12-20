@@ -10,7 +10,7 @@ tags = ['Lazada']
 )
 
 @router.get('/check_token')
-def check_token():
+def check_token_laz():
     try:
         last_record = get_last_record()
 

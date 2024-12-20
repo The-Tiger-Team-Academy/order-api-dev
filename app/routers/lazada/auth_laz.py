@@ -7,7 +7,7 @@ tags = ['Lazada']
 )
 
 @router.get('/auth')
-def auth():
+def auth_laz():
     call_back = "https://google.com/"
     app_key = 131467
     link = f"https://auth.lazada.com/oauth/authorize?response_type=code&force_auth=true&redirect_uri={call_back}&client_id={app_key}"

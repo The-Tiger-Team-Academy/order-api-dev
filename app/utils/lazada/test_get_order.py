@@ -1,8 +1,12 @@
 import lazop #type: ignore
+from dotenv import load_dotenv #type: ignore
+import os
+load_dotenv()
 
 url = "https://api.lazada.co.th/rest"
 appkey = "131467"
-appSecret = "RXEpAbUXTGdVMWzRKqk4Oyt0mzxlVxSg"
+appkey = os.getenv("LAZ_KEY")
+appSecret = os.getenv("LAZ_SECRET")
 access_token = "50000801202pIQ17f0f17aczhvflxDtwjfchU8nWzclgMHVir1mHa9RPcFK8MQ64"
 
 client = lazop.LazopClient(url, appkey ,appSecret)

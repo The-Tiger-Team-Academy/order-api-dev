@@ -21,7 +21,7 @@ redirect_url = os.getenv("REDIRECT_URL")
 host = "https://partner.shopeemobile.com"
 
 @router.get('/auth')
-def auth():
+def auth_shopee():
     ts = int(time.time())
     path = "/api/v2/shop/auth_partner"
     base_str = str(partner_id) + path + str(ts)

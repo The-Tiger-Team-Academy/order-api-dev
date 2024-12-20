@@ -22,7 +22,7 @@ partner_key = os.getenv("PARTNER_KEY")
 host = "https://partner.shopeemobile.com"
 
 @router.get('/new_token')
-def new_token():
+def new_token_shopee():
     ts = int(time.time())
     body = {"code": code, "shop_id": shop_id, "partner_id": partner_id}
 

@@ -3,7 +3,7 @@ from datetime import datetime
 from typing import Optional, Dict, Any
 from ...utils.shopee.get_order_detail import get_order_detiail
 from ...utils.shopee.get_order_list import get_order_list
-
+from ...utils.shopee.latest_access_token import get_latest_access_token_from_db
 
 router = APIRouter(
 prefix='/shopee',
@@ -11,13 +11,12 @@ tags = ['Shopee']
 )
 
 @router.get("/get_all_orders", response_model=Dict[str, Any])
-def get_all_order(
-    access_token: str,
+async def get_all_order(
     order_status: str = "READY_TO_SHIP",
     start_date: Optional[str] = None,
     end_date: Optional[str] = None,
     request_order_status_pending: Optional[bool] = False,
-    response_optional_fields: Optional[str] = "buyer_username,pay_time,item_list",
+    response_optional_fields: Optional[str] = "buyer_username,pay_time,item_list,payment_method",
 ) -> Dict[str, Any]:
     try:
         if not start_date or not end_date:
@@ -29,6 +28,7 @@ def get_all_order(
         if start_time > end_time:
             raise HTTPException(status_code=400, detail="start_date must be earlier than or equal to end_date.")
 
+        access_token = get_latest_access_token_from_db()
         order_list = get_order_list(order_status, start_time, end_time, access_token)
 
         order_sn_list = ",".join([order["order_sn"] for order in order_list])
