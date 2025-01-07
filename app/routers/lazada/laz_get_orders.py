@@ -14,12 +14,10 @@ router = APIRouter(
 load_dotenv()
 
 LAZADA_URL = "https://api.lazada.co.th/rest"
-# Thailand is UTC+7
 THAI_OFFSET = timedelta(hours=7)
 THAI_TIMEZONE = timezone(THAI_OFFSET)
 
 def validate_environment() -> tuple[str, str]:
-    """Validate required environment variables."""
     appkey = os.getenv("LAZ_KEY")
     appSecret = os.getenv("LAZ_SECRET")
     
@@ -32,7 +30,6 @@ def validate_environment() -> tuple[str, str]:
     return appkey, appSecret
 
 def create_lazada_client() -> tuple[lazop.LazopClient, str]:
-    """Create Lazada client with proper configuration."""
     try:
         appkey, appSecret = validate_environment()
         access_token = get_latest_access_token_from_db()
@@ -54,30 +51,23 @@ def create_lazada_client() -> tuple[lazop.LazopClient, str]:
 
 @router.get("/get_orders")
 def laz_get_orders() -> Dict[str, Any]:
-    """
-    Fetch orders from Lazada API with ready_to_ship status for the last 15 days.
-    Returns JSON response with order details.
-    """
+
     try:
         client, access_token = create_lazada_client()
         
-        # Create request for orders
         request = lazop.LazopRequest('/orders/get', 'GET')
         
-        # Set parameters
         request.add_api_param('offset', '0')
-        request.add_api_param('limit', '10')
+        request.add_api_param('limit', '100')
         
-        # Calculate 15 days ago in Thai timezone
         current_time = datetime.now(THAI_TIMEZONE)
         fifteen_days_ago = current_time - timedelta(days=15)
         formatted_time = fifteen_days_ago.strftime('%Y-%m-%dT%H:%M:%S+07:00')
         request.add_api_param('update_after', formatted_time)
         
         request.add_api_param('sort_by', 'created_at')
-        request.add_api_param('status', 'ready_to_ship')
+        request.add_api_param('status', 'pending')
         
-        # Execute request
         response = client.execute(request, access_token)
         
         if not response or not response.body:
