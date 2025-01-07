@@ -29,7 +29,7 @@ def normalize_order_structure(orders: List[Dict], source: str) -> List[Dict]:
                 'items_count': order.get('items_count', '0'),
                 'status': order.get('statuses', [''])[0] if order.get('statuses') else '',
                 'customer_name': order.get('billing_first_name', ''),
-                'created_at': order.get('created_at', ''),
+                'create_time': order.get('created_at', ''),
                 'items': [
                     {
                         'product_id': item.get('product_id', ''),
@@ -69,9 +69,9 @@ def normalize_order_structure(orders: List[Dict], source: str) -> List[Dict]:
     
     return normalized_orders
 
-async def safe_get_lazada_orders():
+async def safe_get_lazada_orders(status: str):
     try:
-        lazada_response = await get_lazada_orders()
+        lazada_response = await get_lazada_orders(status)
         if lazada_response.get('code') == '0':
             return lazada_response
         else:
@@ -130,7 +130,8 @@ async def safe_get_shopee_orders(start_date: str, end_date: str, status: str):
 async def get_unified_marketplace_orders(
     start_date: Optional[str] = None,
     end_date: Optional[str] = None,
-    status: Optional[str] = "READY_TO_SHIP"
+    status_shopee: Optional[str] = "READY_TO_SHIP",
+    status_lazada: Optional[str] = "ready_to_ship",
 ) -> Dict[str, Any]:
     try:
         if not start_date or not end_date:
@@ -138,8 +139,8 @@ async def get_unified_marketplace_orders(
             end_date = (today + timedelta(days=1)).strftime("%Y-%m-%d")
             start_date = (today - timedelta(days=10)).strftime("%Y-%m-%d")
 
-        lazada_response = await safe_get_lazada_orders()
-        shopee_response = await safe_get_shopee_orders(start_date, end_date, status)
+        lazada_response = await safe_get_lazada_orders(status_lazada)
+        shopee_response = await safe_get_shopee_orders(start_date, end_date, status_shopee)
 
         lazada_orders = lazada_response.get('data', {}).get('orders', [])
         shopee_orders = shopee_response.get('order_details', [])

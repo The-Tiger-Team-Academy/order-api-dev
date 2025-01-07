@@ -85,8 +85,7 @@ async def refreshToken():
             logger.error(f"Failed to decode JSON response: {e}")
             raise HTTPException(status_code=500, detail="Invalid response from Shopee API")
 
-        # ตรวจสอบ error จาก Shopee API
-        if "error" in content:
+        if "error" in content and content["error"]:
             error_message = content.get("message", "Unknown error")
             logger.error(f"Shopee API error: {error_message}")
             raise HTTPException(status_code=400, detail=f"Shopee API error: {error_message}")

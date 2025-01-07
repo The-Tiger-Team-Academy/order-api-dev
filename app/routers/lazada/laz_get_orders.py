@@ -61,12 +61,12 @@ def laz_get_orders() -> Dict[str, Any]:
         request.add_api_param('limit', '100')
         
         current_time = datetime.now(THAI_TIMEZONE)
-        fifteen_days_ago = current_time - timedelta(days=15)
+        fifteen_days_ago = current_time - timedelta(days=5)
         formatted_time = fifteen_days_ago.strftime('%Y-%m-%dT%H:%M:%S+07:00')
         request.add_api_param('update_after', formatted_time)
         
         request.add_api_param('sort_by', 'created_at')
-        request.add_api_param('status', 'pending')
+        request.add_api_param('status', 'delivered')
         
         response = client.execute(request, access_token)
         

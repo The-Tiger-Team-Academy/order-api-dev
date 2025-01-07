@@ -15,14 +15,13 @@ tags = ['Shopee']
 
 load_dotenv()
 
-code = os.getenv("CODE")
 shop_id = int(os.getenv("SHOP_ID"))
 partner_id = int(os.getenv("PARTNER_ID"))
 partner_key = os.getenv("PARTNER_KEY")
 host = "https://partner.shopeemobile.com"
 
 @router.get('/new_token')
-def new_token_shopee():
+def new_token_shopee(code: str):
     ts = int(time.time())
     body = {"code": code, "shop_id": shop_id, "partner_id": partner_id}
 

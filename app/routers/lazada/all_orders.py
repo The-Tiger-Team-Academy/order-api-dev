@@ -19,7 +19,7 @@ def get_lazada_client():
     appSecret = os.getenv("LAZ_SECRET")
     return lazop.LazopClient(url, appkey, appSecret)
 
-def fetch_orders(client: Any, access_token: str) -> Dict:
+def fetch_orders(client: Any, access_token: str, status: str) -> Dict:
     current_time = datetime.utcnow() + timedelta(hours=8)
     day = current_time - timedelta(days=15)
     update_after = day.strftime('%Y-%m-%dT%H:%M:%S+08:00')
@@ -28,7 +28,7 @@ def fetch_orders(client: Any, access_token: str) -> Dict:
     request.add_api_param('limit', '100')
     request.add_api_param('update_after', update_after)
     request.add_api_param('sort_by', 'created_at')
-    request.add_api_param('status', 'ready_to_ship')
+    request.add_api_param('status', status)
     response = client.execute(request, access_token)
     return response.body
 
@@ -64,12 +64,12 @@ def filter_item_info(item: Dict) -> Dict:
     }
 
 @router.get("/get_orders_with_details")
-async def get_orders_with_details():
+async def get_orders_with_details(status: str):
     try:
         access_token = get_latest_access_token_from_db()
         client = get_lazada_client()
         
-        orders_response = fetch_orders(client, access_token)
+        orders_response = fetch_orders(client, access_token, status)
         
         if orders_response.get('code') != '0':
             return {"error": "Failed to fetch orders", "details": orders_response}
