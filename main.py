@@ -4,7 +4,7 @@ from pydantic import BaseModel # type: ignore
 from dotenv import load_dotenv # type: ignore
 from fastapi.middleware.cors import CORSMiddleware # type: ignore
 
-from app.routers.shopee import check_token_shopee, new_token_shopee, auth_shopee, get_all_order, refresh_token_shopee
+from app.routers.shopee import check_token_shopee, new_token_shopee, auth_shopee, get_all_order, refresh_token_shopee, get_order_detail
 from app.routers.storehub import inventory_check
 from app.routers.orders import compare_orders, merge_orders
 from app.routers.lazada import auth_laz, check_token_laz, new_token_laz, refresh_token_laz, laz_get_orders, laz_get_order_detail, all_orders
@@ -47,6 +47,7 @@ app.include_router(check_token_shopee.router)
 app.include_router(auth_shopee.router)
 app.include_router(new_token_shopee.router)
 app.include_router(get_all_order.router)
+app.include_router(get_order_detail.router)
 #----------------------
 
 #---Lazada Routers-----

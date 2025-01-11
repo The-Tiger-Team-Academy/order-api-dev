@@ -1,4 +1,5 @@
 from fastapi import HTTPException # type: ignore
+from fastapi import APIRouter # type: ignore
 import hmac
 import hashlib
 from dotenv import load_dotenv # type: ignore
@@ -6,14 +7,25 @@ import os
 import requests # type: ignore
 import json
 from datetime import datetime
+from ...utils.shopee.latest_access_token import get_latest_access_token_from_db
+
 load_dotenv()
+
+
+router = APIRouter(
+prefix='/shopee',
+tags = ['Shopee']
+)
+
 
 shop_id = int(os.getenv("SHOP_ID"))
 partner_id = int(os.getenv("PARTNER_ID"))
 partner_key = os.getenv("PARTNER_KEY")
 host = "https://partner.shopeemobile.com"
 
-def get_order_detiail(order_sn_list: str, access_token: str, request_order_status_pending=True, response_optional_fields="buyer_username,pay_time,item_list"):
+@router.get('/get_order_detail')
+async def get_order_detiail(order_sn_list: str ,request_order_status_pending=True, response_optional_fields="buyer_username,pay_time,item_list"):
+    access_token = get_latest_access_token_from_db()
     ts = int(datetime.timestamp(datetime.now()))
     path = "/api/v2/order/get_order_detail"
     base_str = str(partner_id) + path + str(ts) + access_token + str(shop_id)

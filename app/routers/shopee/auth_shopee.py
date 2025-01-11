@@ -13,8 +13,6 @@ tags = ['Shopee']
 
 load_dotenv()
 
-code = os.getenv("CODE")
-shop_id = int(os.getenv("SHOP_ID"))
 partner_id = int(os.getenv("PARTNER_ID"))
 partner_key = os.getenv("PARTNER_KEY")
 redirect_url = os.getenv("REDIRECT_URL")

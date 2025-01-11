@@ -21,7 +21,7 @@ def get_lazada_client():
 
 def fetch_orders(client: Any, access_token: str, status: str) -> Dict:
     current_time = datetime.utcnow() + timedelta(hours=8)
-    day = current_time - timedelta(days=15)
+    day = current_time - timedelta(days=10)
     update_after = day.strftime('%Y-%m-%dT%H:%M:%S+08:00')
     request = lazop.LazopRequest('/orders/get', 'GET')
     request.add_api_param('offset', '0')
