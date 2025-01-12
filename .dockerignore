@@ -1,20 +1,36 @@
-# Ignore Python cache directories
+# Ignore Python cache and compiled files
 __pycache__/
 *.pyc
 *.pyo
 
-# Ignore environment files
+# Ignore environment files (but include .env.example if applicable)
 .env
+!.env.example
 
-# Ignore Git configuration files
+# Ignore Git files
 .git/
 .gitignore
 
-# Ignore Docker-related files
+# Ignore Docker configuration files (usually not needed inside the container)
 Dockerfile
 docker-compose.yml
 
-# Ignore other unnecessary files or directories
+# Ignore log files
 *.log
+
+# Ignore temporary or backup files
 *.bak
 *.swp
+*.tmp
+
+# Ignore IDE or editor-specific files
+*.idea/
+.vscode/
+*.DS_Store
+
+# Ignore node_modules (if using JavaScript/TypeScript in the project)
+node_modules/
+
+# Ignore build output (if applicable)
+build/
+dist/
