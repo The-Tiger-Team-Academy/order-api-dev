@@ -70,4 +70,9 @@ jobs:
         LAZ_KEY: ${{ secrets.LAZ_KEY }}
         LAZ_SECRET: ${{ secrets.LAZ_SECRET }}
         LAZ_CODE: ${{ secrets.LAZ_CODE }}
+        LINE_CHANNEL_ACCESS_TOKEN: ${{ secrets.LINE_CHANNEL_ACCESS_TOKEN }}
+        LINE_CHANNEL_SECRET: ${{ secrets.LINE_CHANNEL_SECRET }}
+        LINE_GROUP_ID: ${{ secrets.LINE_GROUP_ID }}
+
+
 
