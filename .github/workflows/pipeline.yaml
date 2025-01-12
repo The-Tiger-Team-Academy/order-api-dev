@@ -1,78 +1,67 @@
-name: CI/CD Pipeline Backend Batttrack
+name: FastAPI CI/CD with Docker Compose
 
 on:
   push:
     branches:
       - main
-  pull_request:
-    branches:
-      - main
+
+env:
+  DOCKER_IMAGE: bestbest/be-orders:latest
+  DEPLOY_SERVER: 119.59.99.92
+  DEPLOY_USER: root
+  DEPLOY_PASSWORD: ${{ secrets.SERVER_PASSWORD }}
+  DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+  DOCKER_USERNAME: bestbest
 
 jobs:
-  build:
+  build_and_push:
+    name: Build and Push Docker Image
     runs-on: ubuntu-latest
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v2
-
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.9'
-
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
+      uses: actions/checkout@v3
 
     - name: Log in to Docker Hub
-      uses: docker/login-action@v2
-      with:
-        username: ${{ secrets.DOCKER_USERNAME }}
-        password: ${{ secrets.DOCKER_PASSWORD }}
+      run: echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin
 
     - name: Build Docker image
-      run: docker build -t bestbest/be-orders .
+      run: docker build -t bestbest/be-orders:latest .
 
-    - name: Push to Docker Hub
-      uses: docker/build-push-action@v3
-      with:
-        context: .
-        push: true
-        tags: bestbest/be-orders:latest
+    - name: Push Docker image to Docker Hub
+      run: docker push bestbest/be-orders:latest
 
-    - name: Install sshpass
-      run: sudo apt-get install -y sshpass
+  deploy:
+        name: Deploy to Server
+        runs-on: ubuntu-latest
+        needs: build_and_push
 
-    - name: Deploy to host
-      run: |
-        sshpass -p "${{ secrets.SERVER_PASSWORD }}" ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USERNAME }}@$SERVER_IP << EOF
-          docker stop be-orders || true
-          docker rm be-orders || true
-          docker pull bestbest/be-orders:latest
-          cd /home/be-orderhub
-          docker compose up -d
-        EOF
-      env:
-        SERVER_IP: ${{ secrets.SERVER_IP }}
-        PARTNER_ID: ${{ secrets.PARTNER_ID }}
-        PARTNER_KEY: ${{ secrets.PARTNER_KEY }}
-        REDIRECT_URL: ${{ secrets.REDIRECT_URL }}
-        CODE: ${{ secrets.CODE }}
-        SHOP_ID: ${{ secrets.SHOP_ID }}
-        STOREHUB_API_USERNAME: ${{ secrets.STOREHUB_API_USERNAME }}
-        STOREHUB_API_PASSWORD: ${{ secrets.STOREHUB_API_PASSWORD }}
-        DB_USERNAME: ${{ secrets.DB_USERNAME }}
-        DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
-        DB_HOST: ${{ secrets.DB_HOST }}
-        DB_PORT: ${{ secrets.DB_PORT }}
-        LAZ_KEY: ${{ secrets.LAZ_KEY }}
-        LAZ_SECRET: ${{ secrets.LAZ_SECRET }}
-        LAZ_CODE: ${{ secrets.LAZ_CODE }}
-        LINE_CHANNEL_ACCESS_TOKEN: ${{ secrets.LINE_CHANNEL_ACCESS_TOKEN }}
-        LINE_CHANNEL_SECRET: ${{ secrets.LINE_CHANNEL_SECRET }}
-        LINE_GROUP_ID: ${{ secrets.LINE_GROUP_ID }}
+        steps:
+        - name: Install sshpass
+          run: sudo apt-get update && sudo apt-get install -y sshpass
+
+        - name: Deploy to Server
+          run: |
+            export SSHPASS=$DEPLOY_PASSWORD
+            sshpass -e ssh -o StrictHostKeyChecking=no $DEPLOY_USER@$DEPLOY_SERVER '
+
+              docker system prune -a
+
+              # Pull the latest image first
+              docker pull bestbest/be-orders:latest
+
+              # Navigate to project directory
+              cd /home/be-orderhub
+
+              # Stop and remove existing containers
+              docker compose down
+
+              # Start new containers
+              docker compose up -d
+
+              # Check if containers are running
+              docker compose ps
+            '
 
 
 

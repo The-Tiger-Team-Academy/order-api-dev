@@ -1,0 +1,25 @@
+version: '3'
+services:
+  be-orders:
+    image: bestbest/be-orders:latest
+    environment:
+      PARTNER_ID: 2009920
+      PARTNER_KEY: 78786f495a625a77555968534c624d784f45516d424e61447a646c756b567472
+      REDIRECT_URL: https://www.google.com/
+      CODE: 696a504c676a4b514751475942795972
+      SHOP_ID: 178489005
+      STOREHUB_API_USERNAME: jewellista
+      STOREHUB_API_PASSWORD: cb0e675a3b224ded878a154f7851848b
+      DB_USERNAME: postgres
+      DB_PASSWORD: EjXIBKXKDPuj
+      DB_HOST: 119.59.99.92
+      DB_PORT: 5432
+      DB_SCHEMA: orderhub
+      LAZ_KEY: 131467
+      LAZ_SECRET: RXEpAbUXTGdVMWzRKqk4Oyt0mzxlVxSg
+      LAZ_CODE: 0_131467_Uaiqi96qWM3roggnlBCYg2SG40332
+      LINE_CHANNEL_ACCESS_TOKEN: GNwYjz57Kb27Rx9buk5G42j2iysAA2zmSaYLSL6F+1eiU876i7IgJUVL4bbkYWusM+OToOLeNtUL+8Z3UiPxnB1fGL2TMkE7jqWUFboaupKY9ox3zzNrdb8/9Ve1sA7AUho/7gYoF05KNidmtoMmKwdB04t89/1O/w1cDnyilFU=
+      LINE_CHANNEL_SECRET: 3c828de0474e4c8a0491090687b1b44d
+      LINE_GROUP_ID: Cf30bdf52cc49067bb21beacb88b6aebc
+    ports:
+      - "8080:80"
