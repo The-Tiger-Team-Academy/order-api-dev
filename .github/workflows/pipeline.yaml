@@ -47,7 +47,6 @@ jobs:
 
               docker system prune -a
 
-              # Pull the latest image first
               docker pull bestbest/be-orders:latest
 
               # Navigate to project directory
