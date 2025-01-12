@@ -43,24 +43,15 @@ jobs:
         - name: Deploy to Server
           run: |
             export SSHPASS=$DEPLOY_PASSWORD
-            sshpass -e ssh -o StrictHostKeyChecking=no $DEPLOY_USER@$DEPLOY_SERVER '
+            sshpass -e ssh -o StrictHostKeyChecking=no $DEPLOY_USER@$DEPLOY_SERVER << EOF
+            docker system prune -a -f
+            docker pull bestbest/be-orders:latest
+            cd /home/be-orderhub
+            docker compose down
+            docker compose up -d
+            docker compose ps
+            EOF
 
-              docker system prune -a
-
-              docker pull bestbest/be-orders:latest
-
-              # Navigate to project directory
-              cd /home/be-orderhub
-
-              # Stop and remove existing containers
-              docker compose down
-
-              # Start new containers
-              docker compose up -d
-
-              # Check if containers are running
-              docker compose ps
-            '
 
 
 
