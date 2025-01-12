@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - main
+  pull_request:
+    branches:
+      - main
 
 env:
   DOCKER_IMAGE: bestbest/be-orders:latest
@@ -19,39 +22,35 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-    - name: Log in to Docker Hub
-      run: echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin
+      - name: Log in to Docker Hub
+        run: echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin
 
-    - name: Build Docker image
-      run: docker build -t bestbest/be-orders:latest .
+      - name: Build Docker image
+        run: docker build -t ${{ env.DOCKER_IMAGE }} .
 
-    - name: Push Docker image to Docker Hub
-      run: docker push bestbest/be-orders:latest
+      - name: Push Docker image to Docker Hub
+        run: docker push ${{ env.DOCKER_IMAGE }}
 
   deploy:
-        name: Deploy to Server
-        runs-on: ubuntu-latest
-        needs: build_and_push
+    name: Deploy to Server
+    runs-on: ubuntu-latest
+    needs: build_and_push
 
-        steps:
-        - name: Install sshpass
-          run: sudo apt-get update && sudo apt-get install -y sshpass
+    steps:
+      - name: Install sshpass
+        run: sudo apt-get update && sudo apt-get install -y sshpass
 
-        - name: Deploy to Server
-          run: |
-            export SSHPASS=$DEPLOY_PASSWORD
-            sshpass -e ssh -o StrictHostKeyChecking=no $DEPLOY_USER@$DEPLOY_SERVER << EOF
-            docker system prune -a -f
-            docker pull bestbest/be-orders:latest
-            cd /home/be-orderhub
-            docker compose down
-            docker compose up -d
-            docker compose ps
-            EOF
-
-
-
-
+      - name: Deploy to Server
+        run: |
+          export SSHPASS=$DEPLOY_PASSWORD
+          sshpass -e ssh -o StrictHostKeyChecking=no $DEPLOY_USER@$DEPLOY_SERVER << EOF
+          docker system prune -a -f
+          docker pull ${{ env.DOCKER_IMAGE }}
+          cd /home/be-orderhub
+          docker compose down
+          docker compose up -d
+          docker compose ps
+          EOF
