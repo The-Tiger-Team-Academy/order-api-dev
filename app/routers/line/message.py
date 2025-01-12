@@ -1,127 +1,88 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import Form, UploadFile, File, APIRouter
 from pydantic import BaseModel, HttpUrl
 from typing import Optional
 from linebot import LineBotApi
-from linebot.models import TextSendMessage, ImageSendMessage
-from linebot.exceptions import LineBotApiError
+import os
+from dotenv import load_dotenv
+from fastapi.responses import JSONResponse
+import requests
+import logging
+from linebot.models import ImageSendMessage
 
 router = APIRouter(
     prefix="/line",
     tags=["Line Messaging"]
 )
 
-# Configuration
-LINE_CHANNEL_ACCESS_TOKEN = "GNwYjz57Kb27Rx9buk5G42j2iysAA2zmSaYLSL6F+1eiU876i7IgJUVL4bbkYWusM+OToOLeNtUL+8Z3UiPxnB1fGL2TMkE7jqWUFboaupKY9ox3zzNrdb8/9Ve1sA7AUho/7gYoF05KNidmtoMmKwdB04t89/1O/w1cDnyilFU="
+load_dotenv()
+
+LINE_CHANNEL_ACCESS_TOKEN = os.getenv("LINE_CHANNEL_ACCESS_TOKEN")
+LINE_CHANNEL_SECRET = os.getenv("LINE_CHANNEL_SECRET")
+LINE_GROUP_ID = os.getenv("LINE_GROUP_ID")
+
 line_bot_api = LineBotApi(LINE_CHANNEL_ACCESS_TOKEN)
 
-class LineMessage(BaseModel):
-    user_id: str
-    message: Optional[str] = None
-    image_url: Optional[HttpUrl] = None
-
 @router.post("/send_message")
-async def send_line_message(message_data: LineMessage):
-    """
-    Send message and/or image to Line user
-    
-    Parameters:
-    - user_id: Line user ID
-    - message: Text message (optional)
-    - image_url: URL of image to send (optional)
-    """
+async def send_message(
+    message: str = Form(None),
+    user_id_line: str = Form(...),
+    image_url: Optional[HttpUrl] = None,
+    branch: str = Form(None)
+):
     try:
-        messages = []
-        
-        # Add text message if provided
-        if message_data.message:
-            messages.append(
-                TextSendMessage(text=message_data.message)
-            )
-        
-        # Add image if URL is provided
-        if message_data.image_url:
-            messages.append(
-                ImageSendMessage(
-                    original_content_url=str(message_data.image_url),
-                    preview_image_url=str(message_data.image_url)
-                )
-            )
+        # Send text message first
+        if message:
+            text_payload = {
+                "to": LINE_GROUP_ID,
+                "messages": [{
+                    "type": "textV2",  # Changed 'textV2' to 'text' (correct type for LINE API)
+                    "text": f"{message} {{user1}}",
+                    "substitution": {
+                        "user1": {
+                            "type": "mention",
+                            "mentionee": {
+                                "type": "user",
+                                "userId": user_id_line
+                            }
+                        }
+                    }
+                }]
+            }
             
-        # Check if at least one message type is provided
-        if not messages:
-            raise HTTPException(
-                status_code=400,
-                detail="Either message or image_url must be provided"
+            response = requests.post(
+                'https://api.line.me/v2/bot/message/push',
+                headers={
+                    'Content-Type': 'application/json',
+                    'Authorization': f'Bearer {LINE_CHANNEL_ACCESS_TOKEN}'
+                },
+                json=text_payload
             )
-            
-        # Send message(s)
-        line_bot_api.push_message(
-            message_data.user_id,
-            messages
-        )
-        
-        return {
-            "status": "success",
-            "message": "Messages sent successfully"
-        }
-        
-    except LineBotApiError as line_error:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Line API error: {str(line_error)}"
-        )
-    except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"An error occurred: {str(e)}"
-        )
+            response.raise_for_status()
 
-@router.post("/broadcast")
-async def broadcast_message(message_data: LineMessage):
-    """
-    Broadcast message and/or image to all Line users
-    
-    Parameters:
-    - message: Text message (optional)
-    - image_url: URL of image to send (optional)
-    """
-    try:
-        messages = []
-        
-        if message_data.message:
-            messages.append(
-                TextSendMessage(text=message_data.message)
-            )
-            
-        if message_data.image_url:
-            messages.append(
-                ImageSendMessage(
-                    original_content_url=str(message_data.image_url),
-                    preview_image_url=str(message_data.image_url)
+        if image_url:
+            try:
+                logging.debug(f"Sending image to LINE: {image_url}")
+                image_message = ImageSendMessage(
+                    original_content_url=str(image_url),
+                    preview_image_url=str(image_url)
                 )
-            )
-            
-        if not messages:
-            raise HTTPException(
+                line_bot_api.push_message(LINE_GROUP_ID, image_message)
+
+            except Exception as e:
+                logging.error(f"Error sending image: {str(e)}")
+                raise
+
+        if not message and not image_url:
+            return JSONResponse(
                 status_code=400,
-                detail="Either message or image_url must be provided"
+                content={"message": "At least one of 'message' or 'image_url' must be provided"}
             )
-            
-        line_bot_api.broadcast(messages)
-        
-        return {
-            "status": "success",
-            "message": "Messages broadcasted successfully"
-        }
-        
-    except LineBotApiError as line_error:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Line API error: {str(line_error)}"
-        )
+
+        return {"status": "success"}
+
     except Exception as e:
-        raise HTTPException(
+        logging.error(f"Error sending message: {str(e)}")
+        return JSONResponse(
             status_code=500,
-            detail=f"An error occurred: {str(e)}"
+            content={"message": str(e)}
         )
-    
